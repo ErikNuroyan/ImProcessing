@@ -10,16 +10,18 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-cv::Mat gradient(const cv::Mat & img);
+cv::Mat gradient_n(const cv::Mat & img);
 int * energyMinSeam(const cv::Mat & grads);
 cv::Mat resize(const int * ptr, const cv::Mat & img);
 
 int main(int argc, const char * argv[]) {
     using namespace cv;
     
+
+
     //change the directory to where the image is
     Mat forest=imread ("forest.png",IMREAD_GRAYSCALE);
-	
+	Mat lenochk=imread("lenochk.png", IMREAD_GRAYSCALE);
 	
   
     
@@ -27,23 +29,25 @@ int main(int argc, const char * argv[]) {
 
 	
 	
-	int n = 200;                     //Enter the number of Pixels to be deleted
+	int n = 300;                     //Enter the number of Pixels to be deleted
 	int * minSeam;
 	Mat result=forest;
 	Mat grad;
 
+	
 	for (int i = 0; i < n; i++) {
-		grad = gradient(result);
+		grad = gradient_n(result);
 		minSeam = energyMinSeam(grad);
 		result=resize(minSeam, result);
 	}
+	
 
+	imshow("Gradient",gradient_n(forest));
 
-
-	imshow("Forest", forest);
+	//imshow("Forest", forest);
 	imshow("Resized", result);
 
-	imwrite("Resized_Forest.png", result);
+	//imwrite("Resized_Forest.png", result);
 	
 
 
@@ -58,43 +62,38 @@ int main(int argc, const char * argv[]) {
 //Function for calculating the gradient of the image
 //Both for x and y axes
 
-cv::Mat gradient(const cv::Mat & img){
+
+cv::Mat gradient_n(const cv::Mat & img){
       using namespace cv;
     
-      Mat kernelX=Mat::zeros(3,3,CV_8S);
-      Mat kernelY=Mat::zeros(3,3,CV_8S);
+      
+     
+
       //Making the edge detector for x axis
-      auto* img_data=kernelX.data;
-      size_t step=kernelX.step;
       
-      for(int i=0;i<3;i++){
-          img_data[i*step]=1;
-          img_data[i*step+1]=0;
-          img_data[i*step+2]=-1;
-          
-      }
+	  int arr_x[3][3] = { { -1,-2,-1 } ,
+						  { 0,0,0 } ,
+						  { 1,2,1 } };
+	  Mat kernelX = Mat(3, 3, CV_32S, arr_x);
       
+      //Making the edge detector for y axis
+	  int arr_y[3][3] = { { -1,0,1 } ,
+						  { -2,0,2 } ,
+						  { -1,0,1 } };
+	 
+
+	  Mat kernelY = Mat(3, 3, CV_32S, arr_y);
+	  
       
-      //Making the edge detector for x axis
-      img_data=kernelY.data;
-      for(int i=0;i<3;i++){
-          img_data[i*step]=-1;
-          img_data[i*step+1]=0;
-          img_data[i*step+2]=1;
-          
-      }
-    
-      
+
       Mat resOfConvX;
       Mat resOfConvY;
       
-      filter2D(img, resOfConvX, 8, kernelX);
-      filter2D(img, resOfConvY, 8, kernelY);
+      filter2D(img, resOfConvX, -1, kernelX);
+      filter2D(img, resOfConvY, -1, kernelY);
       
-    
-    
       
-      return resOfConvX+resOfConvY;
+      return abs(resOfConvX)+abs(resOfConvY);
 }
 
 int * energyMinSeam(const cv::Mat & grads){
@@ -249,3 +248,4 @@ cv::Mat resize(const int * ptr, const cv::Mat & img) {
 
 
 }
+
