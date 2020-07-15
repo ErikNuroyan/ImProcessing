@@ -9,6 +9,8 @@
 
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/cuda.hpp>
+
 
 cv::Mat gradient_n(const cv::Mat & img);
 int * energyMinSeam(const cv::Mat & grads);
@@ -23,7 +25,10 @@ int main(int argc, const char * argv[]) {
     Mat forest=imread ("forest.png",IMREAD_GRAYSCALE);
 	Mat lenochk=imread("lenochk.png", IMREAD_GRAYSCALE);
 	
-  
+	
+
+	
+
     
 
 
@@ -122,7 +127,7 @@ int * energyMinSeam(const cv::Mat & grads){
     //Initiallizing the first column of energies with corresponding
     //values of grads
 	for (int i = 0; i < rows; i++) {
-		en_data[i*step] = 0;
+		en_data[i*step] = grad_data[i*step];
 		dir_data[i*step] = 0;
 	}
 	
@@ -226,23 +231,59 @@ cv::Mat resize(const int * ptr, const cv::Mat & img) {
 	auto * res_data = result.data;
 	int rows = result.rows;
 	int cols = result.cols;
+	auto colomnApply = [ptr, cols, rows, step, img_data, res_data](int offset ,int size) {
+		for (int j = offset; j < offset + size; j++) {
+			for (int i = 0; i < rows; i++) {
 
-	for (int j = 0; j < cols; j++) {
-		for (int i = 0; i < rows; i++) {
-			//Checking if we got to the row of the seam 
-			if (i == ptr[j]) {
+				if (i == ptr[j]) {
 
-				for (int k = i; k < rows; k++) {
-					res_data[k*step + j] = img_data[(k + 1)*step + j];
+					for (int k = i; k < rows; k++) {
+						res_data[k*step + j] = img_data[(k + 1)*step + j];
+					}
+
+					break;
 				}
-
-				break;
-			}
-			else {
-				res_data[i*step + j] = img_data[i*step + j];
+				else {
+					res_data[i*step + j] = img_data[i*step + j];
+				}
 			}
 		}
+	};
+
+	std::vector<std::thread> threads;
+	int numThreads = std::thread::hardware_concurrency();
+	for (int j = 0; j < numThreads; j++) {
+		//threads.push_back(std::thread(colomnApply, j));
+		int offset = j * static_cast<double>(cols) / numThreads;
+		int size = std::min<double>(static_cast<double>(cols) / numThreads, static_cast<double>(cols - offset));
+		if (j != numThreads - 1) {
+			threads.emplace_back(colomnApply, offset, size);
+		}
+		else {
+			colomnApply(offset, size);
+		}
 	}
+	for (auto& thread: threads) {
+		thread.join();
+	}
+
+	
+	//for (int j = 0; j < cols; j++) {
+	//	for (int i = 0; i < rows; i++) {
+	//		Checking if we got to the row of the seam 
+	//		if (i == ptr[j]) {
+
+	//			for (int k = i; k < rows; k++) {
+	//				res_data[k*step + j] = img_data[(k + 1)*step + j];
+	//			}
+
+	//			break;
+	//		}
+	//		else {
+	//			res_data[i*step + j] = img_data[i*step + j];
+	//		}
+	//	}
+	//}
 	
 	return result;
 
