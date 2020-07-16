@@ -22,11 +22,11 @@ int main(int argc, const char * argv[]) {
 
 
     //change the directory to where the image is
-    Mat forest=imread ("forest.png",IMREAD_GRAYSCALE);
-	Mat lenochk=imread("lenochk.png", IMREAD_GRAYSCALE);
+    Mat forest=cv::imread ("forest.png",IMREAD_GRAYSCALE);
+	Mat lenochk=cv::imread("lenochk.png", IMREAD_GRAYSCALE);
 	
 	
-
+	
 	
 
     
@@ -213,7 +213,8 @@ int * energyMinSeam(const cv::Mat & grads){
 
 
 	
-	
+	delete [] en_data;
+	delete [] dir_data; 
     
     return min_seam;
     
