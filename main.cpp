@@ -10,6 +10,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
+#include <climits>
 
 
 cv::Mat gradient_n(const cv::Mat & img);
@@ -22,21 +23,25 @@ int main(int argc, const char * argv[]) {
 
 
     //change the directory to where the image is
-    Mat forest=cv::imread ("forest.png",IMREAD_GRAYSCALE);
-	Mat lenochk=cv::imread("lenochk.png", IMREAD_GRAYSCALE);
-	
-	
-	
+    //Mat forest=cv::imread ("forest.png",IMREAD_GRAYSCALE);
+	//Mat lenochk=cv::imread("lenochk.png", IMREAD_GRAYSCALE);
 	
 
-    
+	Mat forest_bgr = imread("forest_bgr.jpg", IMREAD_COLOR);
+
+	//imshow("Colored Forest", forest_bgr);
+	//Mat grads = gradient_n(forest_bgr);
+	//imshow("Gradient_Colored", gradient_n(forest_bgr));
+	
+	
+	
 
 
 	
 	
 	int n = 300;                     //Enter the number of Pixels to be deleted
-	int * minSeam;
-	Mat result=forest;
+	int * minSeam=nullptr;
+	Mat result=forest_bgr;
 	Mat grad;
 
 	
@@ -47,22 +52,25 @@ int main(int argc, const char * argv[]) {
 	}
 	
 
-	imshow("Gradient",gradient_n(forest));
+	//imshow("Gradient",gradient_n(forest));
 
 	//imshow("Forest", forest);
+	
 	imshow("Resized", result);
 
-	//imwrite("Resized_Forest.png", result);
+	//imwrite("Resized_Forest.jpg", result);
+	
 	
 
 
-
-	//delete minSeam;
+	delete minSeam;
     waitKey(0);
     
     
     return 0;
 }
+
+
 
 //Function for calculating the gradient of the image
 //Both for x and y axes
@@ -74,31 +82,43 @@ cv::Mat gradient_n(const cv::Mat & img){
       
      
 
-      //Making the edge detector for x axis
-      
-	  int arr_x[3][3] = { { -1,-2,-1 } ,
-						  { 0,0,0 } ,
-						  { 1,2,1 } };
-	  Mat kernelX = Mat(3, 3, CV_32S, arr_x);
-      
-      //Making the edge detector for y axis
-	  int arr_y[3][3] = { { -1,0,1 } ,
-						  { -2,0,2 } ,
-						  { -1,0,1 } };
+   //   //Making the edge detector for x axis
+   //   
+	  //int arr_x[3][3] = { { -1,-2,-1 } ,
+			//			  { 0,0,0 } ,
+			//			  { 1,2,1 } };
+	  //Mat kernelX = Mat(3, 3, CV_32S, arr_x);
+   //   
+   //   //Making the edge detector for y axis
+	  //int arr_y[3][3] = { { -1,0,1 } ,
+			//			  { -2,0,2 } ,
+			//			  { -1,0,1 } };
 	 
 
-	  Mat kernelY = Mat(3, 3, CV_32S, arr_y);
+	  //Mat kernelY = Mat(3, 3, CV_32S, arr_y);
 	  
       
 
-      Mat resOfConvX;
-      Mat resOfConvY;
-      
-      filter2D(img, resOfConvX, -1, kernelX);
-      filter2D(img, resOfConvY, -1, kernelY);
-      
-      
-      return abs(resOfConvX)+abs(resOfConvY);
+      Mat dX;
+      Mat dY;
+	  Mat gradient;
+
+	  Sobel(img, dX, CV_16SC1, 1, 0, 3);
+	  Sobel(img, dY, CV_16SC1, 0, 1, 3);
+
+	 
+	  gradient = abs(dX) + abs(dY);
+
+	  Mat bgr[3];
+	  split(gradient, bgr);
+	  Mat grad_final;
+	  grad_final = bgr[0] + bgr[1] + bgr[2];
+
+	  
+	  grad_final.convertTo(grad_final, CV_32F);
+	  
+
+      return grad_final;
 }
 
 int * energyMinSeam(const cv::Mat & grads){
@@ -112,7 +132,7 @@ int * energyMinSeam(const cv::Mat & grads){
     //which were the minimum and using that vector which has
     //length=grads.cols to extract the minimum seam
     
-    auto * grad_data=grads.data;
+   
     int * en_data=new int [grads.rows*grads.cols];
 	int * dir_data = new int[grads.rows*grads.cols];
 	const int rows = grads.rows;
@@ -127,7 +147,7 @@ int * energyMinSeam(const cv::Mat & grads){
     //Initiallizing the first column of energies with corresponding
     //values of grads
 	for (int i = 0; i < rows; i++) {
-		en_data[i*step] = grad_data[i*step];
+		en_data[i*step] = grads.at<int>(i, 0);
 		dir_data[i*step] = 0;
 	}
 	
@@ -137,7 +157,7 @@ int * energyMinSeam(const cv::Mat & grads){
             //Handling the case when the first row is under consideration
             if(i==0){
 				int min = std::min(en_data[i*step + (j - 1)], en_data[(i + 1)*step + (j - 1)]);
-				en_data[i*step + j] = min + (int)grad_data[i*step + j];
+				en_data[i*step + j] = min + grads.at<int>(i, j);
 				if (min == en_data[i*step + (j - 1)]) {
 					dir_data[i*step + j] = 2;    //Central  cell
 				}
@@ -148,7 +168,7 @@ int * energyMinSeam(const cv::Mat & grads){
             //Handling the case when the last row is under consideration
             else if(i==rows-1){
 				int min = std::min(en_data[i*step + (j - 1)], en_data[(i - 1)*step + (j - 1)]);
-				en_data[i*step + j] = min + (int)grad_data[i*step + j];
+				en_data[i*step + j] = min + grads.at<int>(i, j);
 				if (min == en_data[i*step + (j - 1)]) {
 					dir_data[i*step + j] = 2;    //Central  cell
 				}
@@ -160,7 +180,7 @@ int * energyMinSeam(const cv::Mat & grads){
             else{
 				int min = std::min(en_data[i*step + (j - 1)], en_data[(i - 1)*step + (j - 1)]);
 				min = std::min(min, en_data[(i + 1)*step + (j - 1)]);
-				en_data[i*step + j] = min + (int)grad_data[i*step + j];
+				en_data[i*step + j] = min + grads.at<int>(i, j);
 				if (min == en_data[i*step + (j - 1)]) {
 					dir_data[i*step + j] = 2;    //Central  cell
 				}
@@ -228,24 +248,30 @@ cv::Mat resize(const int * ptr, const cv::Mat & img) {
 	size_t step = img.step;
 
 	
-	Mat result= Mat::zeros(img.rows-1, img.cols, CV_8U);
+	Mat result= Mat::zeros(img.rows-1, img.cols, CV_8UC3);
 	auto * res_data = result.data;
 	int rows = result.rows;
 	int cols = result.cols;
-	auto colomnApply = [ptr, cols, rows, step, img_data, res_data](int offset ,int size) {
+	auto colomnApply = [&img, &result,ptr, cols, rows, step, img_data, res_data](int offset ,int size) {
 		for (int j = offset; j < offset + size; j++) {
 			for (int i = 0; i < rows; i++) {
 
 				if (i == ptr[j]) {
 
 					for (int k = i; k < rows; k++) {
-						res_data[k*step + j] = img_data[(k + 1)*step + j];
+						//res_data[k*step + j] = img_data[(k + 1)*step + j];
+						result.at<Vec3b>(k, j)[0] = img.at<Vec3b>(k + 1, j)[0];
+						result.at<Vec3b>(k, j)[1] = img.at<Vec3b>(k + 1, j)[1];
+						result.at<Vec3b>(k, j)[2] = img.at<Vec3b>(k + 1, j)[2];
 					}
 
 					break;
 				}
 				else {
-					res_data[i*step + j] = img_data[i*step + j];
+					//res_data[i*step + j] = img_data[i*step + j];
+					result.at<Vec3b>(i, j)[0] = img.at<Vec3b>(i ,j)[0];
+					result.at<Vec3b>(i, j)[1] = img.at<Vec3b>(i, j)[1];
+					result.at<Vec3b>(i, j)[2] = img.at<Vec3b>(i, j)[2];
 				}
 			}
 		}
