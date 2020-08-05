@@ -24,7 +24,6 @@ private:
 			this->left = nullptr;
 			this->right = nullptr;
 		}
-		
 		~Node() {
 			this->up = nullptr;
 			this->down = nullptr;
@@ -33,11 +32,13 @@ private:
 		};
 
 	};
+
 	Node * head;
-	int width;
-	int height;
-	Node * first_row;
+	short width;
+	short height;
+	Node ** first_row;
 	void resize_once();
+
 	inline cv::Vec3b get_coord(const cv::Mat & img, int i, int j) {
 		return ((i >= 0 && i < img.rows) && (j >= 0 && j < img.cols)) ? img.at<cv::Vec3b>(i, j) :cv::Vec3b(0,0,0);
 	}
@@ -56,6 +57,7 @@ private:
 		int gray1 = ((n.down == nullptr) ? 0 : get_gray((n.down)->col));
 		return abs(gray1 - gray2);
 	}
+
 public:
 	ImageGrid(const cv::Mat & img);
 	void print_grid();
