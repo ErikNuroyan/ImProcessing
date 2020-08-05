@@ -60,7 +60,6 @@ void ImageGrid::print_grid() {
 		current = current_col;
 		j++;
 	}
-	std::cout << i << "   " << j << std::endl;
 }
 cv::Mat ImageGrid::produce_image() {
 	using namespace cv;
@@ -83,7 +82,6 @@ cv::Mat ImageGrid::produce_image() {
 	return result;
 }
 void ImageGrid::resize_once() {
-	static int count = 0;
 	Node * prev_column = head;
 	Node * current_col = head->right;
 	Node * current = head->right;
@@ -189,7 +187,6 @@ void ImageGrid::resize_once() {
 		counter++;	
 		
 	}
-	count++;
 	this->height = this->height - 1;
 }
 void ImageGrid::resize(int n_pixels) {
