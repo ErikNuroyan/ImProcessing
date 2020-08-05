@@ -3,14 +3,14 @@
 //  MyProjectOpenCV
 //
 //  Created by Erik Nuroyan on 6/20/20.
-//  Copyright © 2020 Erik Nuroyan. All rights reserved.
+//  Copyright ï¿½ 2020 Erik Nuroyan. All rights reserved.
 //
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <climits>
 #include <chrono>
 #include "ImageGrid.h"
-
+#include <thread>
 cv::Mat gradient_n(const cv::Mat & img);
 int * energyMinSeam(const cv::Mat & grads);
 cv::Mat resize(const int * ptr, const cv::Mat & img);
@@ -38,13 +38,13 @@ int main(int argc, const char * argv[]) {
 	//Mat res = i_g.produce_image();
 	//std::cout << res.rows << "   " << res.cols << std::endl;
 	auto t_start = std::chrono::high_resolution_clock::now();
-	for(int i=0;i<10;i++){
+	for(int i=0;i<25;i++){
 		i_g.resize(1);
 	}
 	//auto t_start = std::chrono::high_resolution_clock::now();
 	//i_g.print_grid();
 	auto t_end = std::chrono::high_resolution_clock::now();
-	std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()/10 << std::endl;
+	std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()/static_cast<float>(25 * 1e6) << std::endl;
 	//std::cout << forest_bgr.at<Vec3b>(0, 0);
 
 	//int n = 200;                     //Enter the number of Pixels to be deleted
@@ -58,7 +58,7 @@ int main(int argc, const char * argv[]) {
 	//}
 	//imshow("Resized", result);
 	//imshow("Retrieved", i_g.produce_image());
-	waitKey(0);
+	// waitKey(0);
 	//delete minSeam;
 	system("pause");
 	return 0;

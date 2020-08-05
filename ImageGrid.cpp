@@ -99,13 +99,14 @@ void ImageGrid::resize_once() {
 	int c_up = 0;
 	int temp = 0;
 	//auto t_start = std::chrono::high_resolution_clock::now();
+
 	while (current_col != nullptr) {
 		while (current != nullptr) {
 			//std::cout << ((*current).col)<<"  ";
-			c_mid = cost_Cmid_grid((*current));
+			c_mid =  cost_Cmid_grid((*current));
 			temp = get_gray(prev_current->col);
-			c_down = c_mid + abs(temp - get_gray((current->down == nullptr ? cv::Vec3b(0, 0, 0) : current->down->col)));
-			c_up = c_mid + abs(temp - get_gray((current->up == nullptr ? cv::Vec3b(0, 0, 0) : current->up->col)));
+			c_down = c_mid + abs(temp - (current->down == nullptr ? 0 :get_gray(current->down->col)));
+			c_up = c_mid + abs(temp - (current->up == nullptr ? 0 : get_gray(current->up->col)));
 			if (current->up == nullptr) {
 				int min = std::min((prev_current->energy) + c_mid, (prev_current->down->energy) + c_down);
 				current->energy = min;
@@ -142,7 +143,6 @@ void ImageGrid::resize_once() {
 			prev_current = prev_current->down;
 			current = current->down;
 		}
-		//std::cout << std::endl;
 		current_col = current_col->right;
 		prev_column = prev_column->right;
 		current = current_col;

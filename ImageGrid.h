@@ -34,8 +34,8 @@ private:
 
 	};
 	Node * head;
-	short width;
-	short height;
+	int width;
+	int height;
 	Node * first_row;
 	void resize_once();
 	inline cv::Vec3b get_coord(const cv::Mat & img, int i, int j) {
@@ -43,17 +43,17 @@ private:
 	}
 	inline int cost_Cmid(const cv::Mat & img, const int i, const int j)
 	{
-		short gray1 = get_gray(get_coord(img, i + 1, j));
-		short gray2 = get_gray(get_coord(img, i - 1, j));
+		int gray1 = get_gray(get_coord(img, i + 1, j));
+		int gray2 = get_gray(get_coord(img, i - 1, j));
 		return abs(gray1 - gray2);
 	}
-	inline short get_gray(const cv::Vec3b & v) {
-		return ((v[0] + v[1] + v[2]) / 3);
+	inline int get_gray(const cv::Vec3b & v) {
+		return ((int(v[0]) + v[1] + v[2]) / 3);
 	}
 	inline int cost_Cmid_grid(const Node & n)
 	{
-		short gray2 = ((n.up == nullptr) ? 0 : get_gray((n.up)->col));
-		short gray1 = ((n.down == nullptr) ? 0 : get_gray((n.down)->col));
+		int gray2 = ((n.up == nullptr) ? 0 : get_gray((n.up)->col));
+		int gray1 = ((n.down == nullptr) ? 0 : get_gray((n.down)->col));
 		return abs(gray1 - gray2);
 	}
 public:
