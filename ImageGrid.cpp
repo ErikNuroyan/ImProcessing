@@ -6,24 +6,13 @@ ImageGrid::ImageGrid(const cv::Mat & img) {
 	this->height = img.rows;
 	this->width = img.cols;
 	this->first_row = new Node*[img.cols];
-	this->head=new Node();
-	Node * current_col_start = head;
-	Node * current = head;
+	Node * current = nullptr;
 	Node * prev = nullptr;
 	
 	for (int j = 0; j < img.cols; j++) {
-		if (j == img.cols - 1) {
-			current->right = nullptr;
-		}
-		else {
-			current->right = new Node();
-		}
-		current_col_start = current_col_start->right;
+		current = (first_row[j] = new Node());
 		for (int i = 0; i < img.rows; i++) {
 			current->up = prev;
-			if (i == 0) {
-				first_row[j] = current;
-			}
 			if(i!=img.rows-1){
 				current->down = new Node();
 			}
@@ -42,57 +31,45 @@ ImageGrid::ImageGrid(const cv::Mat & img) {
 			current = current->down;
 		}
 		prev = nullptr;
-		current = current_col_start;
 	}
 }
 void ImageGrid::print_grid() {
-	Node * current_col = head;
-	Node * current = head;
-	int i = 0;
-	int j = 0;
-	while (current_col != nullptr) {
-		i = 0;
+	Node * current;
+	for (int c = 0; c < this->width; c++) {
+		current = first_row[c];
 		while (current != nullptr) {
+			//std::cout << current->col << std::endl;
 			current = current->down;
-			i++;
 		}
-		current_col = current_col->right;
-		current = current_col;
-		j++;
 	}
 }
 cv::Mat ImageGrid::produce_image() {
 	using namespace cv;
 	Mat result = Mat(this->height,this->width, CV_8UC3);
-	Node * current_col = head;
-	Node * current = head;
+	Node * current;
 	int i = 0;
-	int j = 0;
-	while (current_col != nullptr) {
+	for (int c = 0; c < this->width; c++) {
 		i = 0;
+		current = first_row[c];
 		while (current != nullptr) {
-			result.at<Vec3b>(i, j) = current->col;
+			result.at<Vec3b>(i, c) = current->col;
 			current = current->down;
 			i++;
 		}
-		current_col = current_col->right;
-		current = current_col;
-		j++;
 	}
 	return result;
 }
 void ImageGrid::resize_once() {
-	Node * prev_column = head;
-	Node * current_col = head->right;
-	Node * current = head->right;
-	Node * prev_current = head;
+	Node * current;
+	Node * prev_current;
 	int c_mid = 0;
 	int c_down = 0;
 	int c_up = 0;
 	int temp = 0;
-	int i = 0;
-	int j = 0;
-	while (current_col != nullptr) {
+
+	for (int c = 1; c < this->width; c++) {
+		prev_current = first_row[c - 1];
+		current = first_row[c];
 		while (current != nullptr) {
 			//std::cout << ((*current).col)<<"  ";
 			c_mid =  cost_Cmid_grid(*current);
@@ -135,18 +112,14 @@ void ImageGrid::resize_once() {
 			prev_current = prev_current->down;
 			current = current->down;
 		}
-		current_col = current_col->right;
-		prev_column = prev_column->right;
-		current = current_col;
-		prev_current = prev_column;
 	}
-	Node * min=prev_current;
-	prev_current = prev_current->down;
-	while (prev_current != nullptr) {
-		if ((prev_current->energy) < (min->energy)) {
-			min = prev_current;
+	Node * min=first_row[width-1];
+	current = min->down;
+	while (current != nullptr) {
+		if ((current->energy) < (min->energy)) {
+			min = current;
 		}
-		prev_current = prev_current->down;
+		current = current->down;
 	}
 	int counter = 0;
 	Node * next=min->left;
@@ -163,19 +136,11 @@ void ImageGrid::resize_once() {
 	//
 
 	while (min!= nullptr) {
-		if (min == head)std::cout << "Yes" << std::endl;
 		if (min->up != nullptr) {
 			(min->up)->down = min->down;
 		}
 		else {
-			if (min->left != nullptr) {
-				first_row[this->width - counter - 2]->right = min->down;
-			}
-			else {
-				this->head = min->down;
-			}
 			first_row[this->width - counter - 1] =min->down;
-			(min->down)->right = min->right;
 		}
 		if (min->down != nullptr)(min->down)->up = min->up;
 		min->left = nullptr;

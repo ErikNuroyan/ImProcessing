@@ -7,14 +7,13 @@ class ImageGrid{
 private:
 	struct Node{	
 	public:
-		Node *up, *down, *left, *right;
+		Node *up, *down, *left;
 		int energy;
 		cv::Vec3b col;
-		Node(Node *up, Node *down, Node *left, Node *right, const cv::Vec3b & col) {
+		Node(Node *up, Node *down, Node *left, const cv::Vec3b & col) {
 			this->up = up;
 			this->down = down;
 			this->left = left;
-			this->right = right;
 			this->energy = 0;
 			this->col = col;
 		}
@@ -22,20 +21,17 @@ private:
 			this->up = nullptr;
 			this->down = nullptr;
 			this->left = nullptr;
-			this->right = nullptr;
 		}
 		~Node() {
 			this->up = nullptr;
 			this->down = nullptr;
 			this->left = nullptr;
-			this->right = nullptr;
 		};
 
 	};
 
-	Node * head;
-	short width;
-	short height;
+	int width;
+	int height;
 	Node ** first_row;
 	void resize_once();
 

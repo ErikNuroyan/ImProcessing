@@ -22,9 +22,9 @@ int main(int argc, const char * argv[]) {
 	auto end = std::chrono::high_resolution_clock::now();
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	std::cout << milliseconds / (static_cast<float>(size) * 1e3) << '\n';
-
-	// imshow("Resized", i_g.produce_image());
-	// waitKey(0);
+	/*imshow("Resized", i_g.produce_image());
+	waitKey(0);*/
+	system("pause");
 	return 0;
 }
 
