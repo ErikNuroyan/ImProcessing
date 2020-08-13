@@ -55,7 +55,6 @@ int main(int argc, const char * argv[]) {
 		ImageGrid i_g = ImageGrid(cropped);
 		output = VideoWriter(("E:/Test Set Videos/Test/"+s+".avi"), VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, Size(img.cols, img.rows), true);   //When using positive size
 		i_g.resize(size, output, upper, lower);																										//use Size(img.cols, img.rows+size)
-		break;
 	}
 
 	//auto start = std::chrono::high_resolution_clock::now();
