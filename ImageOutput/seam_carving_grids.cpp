@@ -15,14 +15,17 @@
 int main(int argc, const char * argv[]) {
 	using namespace cv;
 	//Doing all by hand
-	//std::string image_path = samples::findFile("C:/Users/Erik/Desktop/haha/openCVProject1/openCVProject1/Test Set/8345_489_img80.jpg"); //forest_bgr.jpg
+	//std::string image_path = samples::findFile("C:/Users/Erik/Desktop/haha/openCVProject1/openCVProject1/Test Set/1652_801_img0.jpg"); //forest_bgr.jpg
 	//Mat img = imread(image_path, IMREAD_COLOR);
-	//Mat upper = img(Rect(0, 0, img.cols, 8344));
-	//Mat cropped = img(Rect(0, 8344, img.cols, 489));
-	//Mat lower = img(Rect(0, 8833, img.cols, img.rows-8833));
+	////Mat img= imread("stuff.jpg", IMREAD_COLOR);
+	//Mat upper = img(Rect(0, 0, img.cols, 1651));
+	//Mat cropped = img(Rect(0, 1651, img.cols, 801));
+	//Mat lower = img(Rect(0, 2452, img.cols, img.rows-2452));
+
 	//ImageGrid i_g = ImageGrid(cropped);
-	//VideoWriter output = VideoWriter(("E:/Test Set Videos/8345_489_img80.avi"), VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, Size(img.cols, img.rows), true);
-	//i_g.resize(-122, output, upper, lower);
+	////VideoWriter output = VideoWriter(("E:/Test Set Videos/8345_489_img80.avi"), VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, Size(img.cols, img.rows), true);
+	//i_g.resize(-801/4,upper, lower);
+	//imwrite("Ujezzvanq.jpg", i_g.produce_image());
 
 	//Getting the image dataset
 	//Cropping the image 
@@ -61,7 +64,7 @@ int main(int argc, const char * argv[]) {
 	//auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	//std::cout << milliseconds / (static_cast<float>(size) * 1e3) << '\n';
 	//cv::waitKey(0);
-	//system("pause");
+	system("pause");
 
 	return 0;
 }

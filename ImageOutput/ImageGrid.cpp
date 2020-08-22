@@ -24,6 +24,7 @@ ImageGrid::ImageGrid(const cv::Mat & img) {
 		}
 		prev = nullptr;
 	}
+	std::cout << sizeof(Node)<<std::endl;
 }
 void ImageGrid::print_grid() {
 	Node * current;
@@ -148,14 +149,23 @@ void ImageGrid::update_energy() {
 
 	Node * current = first_row[0];
 	Node * prev_current;
+	int c_mid = 0;
+	int c_down = 0;
+	int c_up = 0;
+	int temp = 0;
 	for (int c = 1; c < this->width; c++) {
 		prev_current = first_row[c - 1];
 		current = first_row[c];
 		while (current != nullptr) {
+			c_mid = cost_Cmid_grid(*current);
+			temp = get_gray(prev_current->col);
+			c_down = c_mid + (current->down == nullptr ? temp : abs(temp - get_gray(current->down->col)));
+			c_up = c_mid + (current->up == nullptr ? temp : abs(temp - get_gray(current->up->col)));
+			//if (current->energy < 0&&current->energy!=-1)std::cout << "Aha" << std::endl; Check for negative values which may appear when crossing the long long range
 			if (current->up == nullptr) {
-				int min = MIN((prev_current->energy), (prev_current->down->energy));
-				current->energy = current->energy+min;
-				if (min == (prev_current->energy)) {
+				int min = MIN((prev_current->energy) + c_mid, (prev_current->down->energy) + c_down);
+				current->energy =current->penalty+ min;
+				if (min == (prev_current->energy) + c_mid) {
 					current->left = prev_current;    //Central  cell
 				}
 				else {
@@ -163,9 +173,9 @@ void ImageGrid::update_energy() {
 				}
 			}
 			else if (current->down == nullptr) {
-				int min = MIN((prev_current->energy), (prev_current->up->energy));
-				current->energy = current->energy+min;
-				if (min == (prev_current->energy)) {
+				int min = MIN((prev_current->energy) + c_mid, (prev_current->up->energy) + c_up);
+				current->energy = current->penalty + min;
+				if (min == (prev_current->energy) + c_mid) {
 					current->left = prev_current;    //Central  cell
 				}
 				else {
@@ -173,12 +183,12 @@ void ImageGrid::update_energy() {
 				}
 			}
 			else {
-				int min = MIN(MIN(prev_current->energy, prev_current->up->energy ), prev_current->down->energy);
-				current->energy = current->energy+ min;
-				if (min == (prev_current->energy)) {
+				int min = MIN(MIN(prev_current->energy + c_mid, prev_current->up->energy + c_up), prev_current->down->energy + c_down);
+				current->energy = current->penalty + min;
+				if (min == (prev_current->energy) + c_mid) {
 					current->left = prev_current;    //Central  cell
 				}
-				else if (min == (prev_current->up->energy)) {
+				else if (min == (prev_current->up->energy) + c_up) {
 					current->left = (prev_current->up); //The Top cell
 				}
 				else {
@@ -224,7 +234,7 @@ void ImageGrid::resize_once_expand(int n, const cv::Mat & upper, const cv::Mat &
 				min->down = new Node();
 				min->down->up = min;
 				min->down->left = min->left;
-				min->down->col =min->up->col;
+				min->down->col = min->up->col;
 			}
 			else {
 				prev_down = min->down;
@@ -235,14 +245,13 @@ void ImageGrid::resize_once_expand(int n, const cv::Mat & upper, const cv::Mat &
 				min->down->left = min->left;
 				min->down->col = (min->up != nullptr ? (min->up->col / 2 + prev_down->col / 2) : prev_down->col);
 			}
-			min->energy =min->energy+45000;
-			min->down->energy = min->energy + 45000;
+			min->penalty = 2088961;
+			min->down->penalty = 2088961;
 			min = next;
 			if (next != nullptr) {
 				next = next->left;
 			}
 		}
-
 		this->height = this->height + 1;
 	}
 	cv::Mat intermediate = produce_image();

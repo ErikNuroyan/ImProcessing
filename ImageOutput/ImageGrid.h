@@ -8,8 +8,9 @@ class ImageGrid{
 private:
 	struct Node{	
 	public:
-		Node *up, *down, *left,*right;
-		int energy;
+		Node *up, *down, *left;
+		long long energy;
+		int penalty = 0;
 		cv::Vec3b col;
 		Node(Node *up, Node *down, Node *left, const cv::Vec3b & col) {
 			this->up = up;
@@ -17,7 +18,6 @@ private:
 			this->left = left;
 			this->energy = -1;
 			this->col = col;
-			this->right = right;
 		}
 		Node() {
 			this->up = nullptr;
