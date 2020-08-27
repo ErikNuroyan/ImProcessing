@@ -79,6 +79,7 @@ void ImageGrid::energy() {
 	for (int i = 1; i < n_threads; i++) {
 		for (int j = 0; j<this->width; j++) {
 			thread_rows[i][j]->energy = -1;
+			thread_rows[i][j]->up->energy = -1;
 		}
 	}
 
