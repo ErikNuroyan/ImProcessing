@@ -8,6 +8,9 @@ ImageGrid::ImageGrid(const cv::Mat & img) {
 	this->height = img.rows;
 	this->width = img.cols;
 	this->n_threads = std::thread::hardware_concurrency();
+	//Finding optimal number of threads
+	this->n_threads = (this->height >= n_threads * 100 ? n_threads : ceil(double(this->height) / 100));
+	n_threads = 2;
 	Node * current = nullptr;
 	Node * prev = nullptr;
 
@@ -91,7 +94,8 @@ cv::Mat ImageGrid::produce_image() {
 	}
 	return result;
 }
-void ImageGrid::energy() {
+
+void ImageGrid::energy_multithreaded() {
 	//Filling the upper rows of threads with -1 to check whether energy was updated or not
 	for (int i = 1; i < n_threads; i++) {
 		for (int j = 0; j < this->width; j++) {
@@ -249,8 +253,71 @@ void ImageGrid::energy() {
 		t.join();
 	}
 }
-void ImageGrid::resize_once_shrink() {
-	this->energy();
+void ImageGrid::energy() {
+	Node * current = thread_rows[0][0];
+	Node * prev_current;
+	int c_mid = 0;
+	int c_down = 0;
+	int c_up = 0;
+	int temp = 0;
+
+	//Filling the first column
+	for (int i = 0; i < this->height; i++) {
+		c_mid = cost_Cmid_grid(*current);
+		c_down = c_mid + (current->down == nullptr ? temp : abs(temp - get_gray(current->down->col)));
+		c_up = c_mid + (current->up == nullptr ? temp : abs(temp - get_gray(current->up->col)));
+		current->energy = std::min({ c_down, c_mid, c_up });
+		current = current->down;
+	}
+	//Filling the rest of the energy values
+	for (int c = 1; c < this->width; c++) {
+		prev_current = thread_rows[0][c - 1];
+		current = thread_rows[0][c];
+		while (current != nullptr) {
+			c_mid = cost_Cmid_grid(*current);
+			temp = get_gray(prev_current->col);
+			c_down = c_mid + (current->down == nullptr ? temp : abs(temp - get_gray(current->down->col)));
+			c_up = c_mid + (current->up == nullptr ? temp : abs(temp - get_gray(current->up->col)));
+			if (current->up == nullptr) {
+				int min = MIN((prev_current->energy) + c_mid, (prev_current->down->energy) + c_down);
+				current->energy = min;
+				if (min == (prev_current->energy) + c_mid) {
+					current->left = prev_current;    //Central  cell
+				}
+				else {
+					current->left = (prev_current->down); //The Bottom cell
+				}
+			}
+			else if (current->down == nullptr) {
+				int min = MIN((prev_current->energy) + c_mid, (prev_current->up->energy) + c_up);
+				current->energy = min;
+				if (min == (prev_current->energy) + c_mid) {
+					current->left = prev_current;    //Central  cell
+				}
+				else {
+					current->left = (prev_current->up); //The Top cell
+				}
+			}
+			else {
+				int min = MIN(MIN(prev_current->energy + c_mid, prev_current->up->energy + c_up), prev_current->down->energy + c_down);
+				current->energy = min;
+				if (min == (prev_current->energy) + c_mid) {
+					current->left = prev_current;    //Central  cell
+				}
+				else if (min == (prev_current->up->energy) + c_up) {
+					current->left = (prev_current->up); //The Top cell
+				}
+				else {
+					current->left = (prev_current->down); //The Bottom cell
+				}
+			}
+			prev_current = prev_current->down;
+			current = current->down;
+		}
+	}
+}
+void ImageGrid::resize_once_shrink_multithreaded() {
+	this->energy_multithreaded();
 	int curr_row = 0;
 	int counter = 1;
 	Node * min = thread_rows[0][width - 1];
@@ -312,11 +379,42 @@ void ImageGrid::resize_once_shrink() {
 		}
 	}
 }
+void ImageGrid::resize_once_shrink() {
+	this->energy();
+	Node * min = thread_rows[0][width - 1];
+	Node * current = min->down;
+	while (current != nullptr) {
+		if ((current->energy) < (min->energy)) {
+			min = current;
+		}
+		current = current->down;
+	}
+
+	int counter = 0;
+	Node * next = min->left;
+	while (min != nullptr) {
+		if (min->up != nullptr) {
+			(min->up)->down = min->down;
+		}
+		else {
+			thread_rows[0][this->width - counter - 1] = min->down;
+		}
+		if (min->down != nullptr)(min->down)->up = min->up;
+		min->left = nullptr;
+		delete min;
+		min = next;
+		if (next != nullptr) {
+			next = next->left;
+		}
+		counter++;
+	}
+	this->height = this->height - 1;
+}
 void ImageGrid::resize_once_expand(int n) {
 	Node * current;
 	Node * prev_current;
 	for (int i = 0; i < n; i++) {
-		this->energy();
+		this->energy_multithreaded();
 		int curr_row = 0;
 		int counter = 1;
 		Node * min = thread_rows[0][width - 1];
@@ -436,9 +534,23 @@ void ImageGrid::resize_once_expand(int n) {
 
 void ImageGrid::resize(int n_pixels) {
 	if (n_pixels < 0) {
-		for (int i = 0; i < abs(n_pixels); i++) {
-			resize_once_shrink();
+		int mt_stop_height = n_threads*(n_threads - 1) + 1;
+		if (this->height + n_pixels >= mt_stop_height) {
+			for (int i = 0; i < abs(n_pixels); i++) {
+				resize_once_shrink_multithreaded();
+			}
 		}
+		else {
+			int end1= this->height - mt_stop_height;
+			int end2 = mt_stop_height - (this->height + n_pixels);
+			for (int i = 0; i < end1; i++) {
+				resize_once_shrink_multithreaded();
+			}
+			for (int i = 0; i < end2; i++) {
+				resize_once_shrink();
+			}
+		}
+		
 		imwrite("est_shrinking.jpg", produce_image());
 	}
 	else if (n_pixels > 0) {

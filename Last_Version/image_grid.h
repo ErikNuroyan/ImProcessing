@@ -40,10 +40,11 @@ private:
 	int height;
 	int n_threads;
 	Node *** thread_rows;
+	void resize_once_shrink_multithreaded();
 	void resize_once_shrink();
 	void resize_once_expand(int n);
+	void energy_multithreaded();
 	void energy();
-	void update_energy();
 	inline cv::Vec3b get_coord(const cv::Mat & img, int i, int j) {
 		return ((i >= 0 && i < img.rows) && (j >= 0 && j < img.cols)) ? img.at<cv::Vec3b>(i, j) : cv::Vec3b(0, 0, 0);
 	}
