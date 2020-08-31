@@ -10,7 +10,6 @@ ImageGrid::ImageGrid(const cv::Mat & img) {
 	this->n_threads = std::thread::hardware_concurrency();
 	//Finding optimal number of threads
 	this->n_threads = (this->height >= n_threads * 100 ? n_threads : ceil(double(this->height) / 100));
-	n_threads = 2;
 	Node * current = nullptr;
 	Node * prev = nullptr;
 
@@ -274,6 +273,7 @@ void ImageGrid::energy() {
 		prev_current = thread_rows[0][c - 1];
 		current = thread_rows[0][c];
 		while (current != nullptr) {
+			if (current->penalty != 0)std::cout << "Yes" << std::endl;
 			c_mid = cost_Cmid_grid(*current);
 			temp = get_gray(prev_current->col);
 			c_down = c_mid + (current->down == nullptr ? temp : abs(temp - get_gray(current->down->col)));
@@ -315,6 +315,18 @@ void ImageGrid::energy() {
 			current = current->down;
 		}
 	}
+}
+void ImageGrid::reset_penalties() {
+	Node * current;
+	for (int c = 0; c < this->width; c++) {
+		current = thread_rows[0][c];
+		while (current != nullptr) {
+			current->penalty = 0;
+			current = current->down;
+		}
+	}
+
+
 }
 void ImageGrid::resize_once_shrink_multithreaded() {
 	this->energy_multithreaded();
@@ -413,7 +425,12 @@ void ImageGrid::resize_once_shrink() {
 void ImageGrid::resize_once_expand(int n) {
 	Node * current;
 	Node * prev_current;
-	for (int i = 0; i < n; i++) {
+	int initial_height = this->height;
+
+	for (int i = 1; i <= n; i++) {
+		if (i%initial_height == 0) {
+			reset_penalties();
+		}
 		this->energy_multithreaded();
 		int curr_row = 0;
 		int counter = 1;
@@ -506,8 +523,8 @@ void ImageGrid::resize_once_expand(int n) {
 				min->penalty = 2088961;
 				min->down->penalty = 2088961;
 				int x = curr_row % int((ceil(double(this->height) / n_threads)));
-				for (int i = (x == 0 ? curr_row / (ceil(double(this->height) / n_threads)) + 1 : ceil(curr_row / (ceil(double(this->height) / n_threads)))); i < n_threads; i++) {
-					thread_rows[i][this->width - counter_2 - 1] = thread_rows[i][this->width - counter_2 - 1]->up;
+				for (int j = (x == 0 ? curr_row / (ceil(double(this->height) / n_threads)) + 1 : ceil(curr_row / (ceil(double(this->height) / n_threads)))); j < n_threads; j++) {
+					thread_rows[j][this->width - counter_2 - 1] = thread_rows[j][this->width - counter_2 - 1]->up;
 				}
 				if (min->dir == '1') {
 					curr_row--;

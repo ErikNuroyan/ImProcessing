@@ -45,6 +45,7 @@ private:
 	void resize_once_expand(int n);
 	void energy_multithreaded();
 	void energy();
+	void reset_penalties();
 	inline cv::Vec3b get_coord(const cv::Mat & img, int i, int j) {
 		return ((i >= 0 && i < img.rows) && (j >= 0 && j < img.cols)) ? img.at<cv::Vec3b>(i, j) : cv::Vec3b(0, 0, 0);
 	}

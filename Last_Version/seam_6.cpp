@@ -16,16 +16,16 @@ int main(int argc, const char * argv[]) {
 	using namespace cv;
 
 	auto start = std::chrono::high_resolution_clock::now();
-	std::string image_path = samples::findFile("forest_bgr.jpg"); //Choose file 
+	std::string image_path = samples::findFile("lenna_2048.jpg"); //Choose file 
 	Mat img = imread(image_path, IMREAD_COLOR);
 	Mat upper = Mat();// img(Rect(0, 0, img.cols, 1649));
-	Mat cropped = img(Rect(0, 200, img.cols, 20));// img(Rect(0, 1649, img.cols, 300));
+	Mat cropped = img(Rect(0, 899, img.cols, 150));// img(Rect(0, 1649, img.cols, 300));
 	Mat lower = Mat();// img(Rect(0, 1949, img.cols, img.rows - 1949));
 	ImageGrid i_g = ImageGrid(cropped);
 	//imshow("Not Cropped", cropped);
-	i_g.resize(30);
+	i_g.resize(600);
 	//imshow("The Cropped", i_g.produce_image());
-	cv::waitKey(0);
+	//cv::waitKey(0);
 	auto end = std::chrono::high_resolution_clock::now();
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	std::cout << milliseconds / (static_cast<float>(1) * 1e3) << '\n';
